@@ -1,3 +1,6 @@
+// pix.js
+import 'dotenv/config';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' });
@@ -6,15 +9,14 @@ export default async function handler(req, res) {
   try {
     const { amount, customer } = req.body;
 
-    if (!process.env.MANGOFY_API_KEY) {
-      console.error('API Key não configurada');
+    const apiKey = process.env.MANGOFY_API_KEY;
+    if (!apiKey) {
+      console.error('API Key da Mangofy não configurada');
       return res.status(500).json({ error: 'API Key não configurada corretamente' });
     }
 
-    console.log('API Key da Mangofy:', process.env.MANGOFY_API_KEY);
-
     const payload = {
-      external_code: Date.now().toString(),
+      external_code: customer.external_code || Date.now().toString(),
       payment_method: 'pix',
       payment_format: 'regular',
       installments: 1,
@@ -31,14 +33,20 @@ export default async function handler(req, res) {
     const response = await fetch('https://checkout.mangofy.com.br/api/v1/payment', {
       method: 'POST',
       headers: {
-        Authorization: `ApiKey ${process.env.MANGOFY_API_KEY}`,
+        Authorization: `ApiKey ${apiKey}`,
         'Content-Type': 'application/json',
         Accept: 'application/json'
       },
       body: JSON.stringify(payload)
     });
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (err) {
+      console.error('Erro ao interpretar JSON da Mangofy:', err);
+      return res.status(500).json({ error: 'Erro interno: resposta da Mangofy inválida' });
+    }
 
     if (!response.ok) {
       console.error('Erro da API Mangofy:', data);
@@ -46,6 +54,7 @@ export default async function handler(req, res) {
     }
 
     res.status(200).json(data);
+
   } catch (error) {
     console.error('Erro ao gerar PIX:', error);
     res.status(500).json({ error: `Erro interno ao gerar PIX: ${error.message}` });

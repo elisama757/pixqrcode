@@ -8,7 +8,6 @@ export default async function handler(req, res) {
     const { amount, customer } = req.body;
 
     const payload = {
-      store_code: process.env.MANGOFY_STORE_CODE,
       external_code: customer.external_code || Date.now().toString(),
       payment_method: "pix",
       payment_format: "regular",
@@ -27,7 +26,6 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         "Authorization": process.env.MANGOFY_API_KEY,
-        "Store-Code": process.env.MANGOFY_STORE_CODE,
         "Content-Type": "application/json",
         "Accept": "application/json"
       },

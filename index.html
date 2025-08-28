@@ -1,94 +1,122 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>11222221</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<style>
-  body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg,#74ebd5,#ACB6E5); display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; padding:20px; box-sizing:border-box; }
-  h1 { font-size:2.2em; color:#2c3e50; margin-bottom:10px; }
-  p { font-size:1.2em; color:#555; margin-bottom:20px; text-align:center; }
-  button { padding:14px 40px; background:#27ae60; color:white; border:none; border-radius:50px; cursor:pointer; font-size:1.1em; box-shadow:0 6px 12px rgba(0,0,0,0.15); transition:all .3s ease; }
-  button:hover { background:#219d55; transform:translateY(-2px); }
-  #pix-info { display:none; background:white; padding:25px; border-radius:20px; box-shadow:0 8px 20px rgba(0,0,0,0.15); text-align:center; max-width:420px; margin-top:30px; }
-  #qrcode { margin:15px auto; padding:10px; background:#fff; border-radius:12px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
-  #pix-code { color:#e74c3c; word-break:break-all; font-size:.9em; margin:10px 0; }
-  #error { color:#e74c3c; font-size:1em; margin-top:10px; display:none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pagamento PIX Moderno</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f7fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { color: #2c3e50; font-size: 2em; margin-bottom: 10px; }
+    p { color: #7f8c8d; font-size: 1.2em; margin-bottom: 20px; }
+    button {
+      padding: 12px 30px;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 1.1em;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: background-color 0.3s, transform 0.2s;
+      margin-bottom: 10px;
+    }
+    button:hover { background-color: #219d55; transform: translateY(-2px); }
+    #pix-info {
+      display: none;
+      background-color: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 400px;
+      margin-top: 20px;
+    }
+    #qrcode { margin: 10px auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden; }
+    #pix-code { color: #e74c3c; word-break: break-all; }
+    #error { color: #e74c3c; font-size: 1em; margin-top: 10px; display: none; }
+  </style>
 </head>
 <body>
-<h1>Pagamento via PIX</h1>
-<p>Clique no botão abaixo para pagar <b>R$ 9,90</b> de forma rápida e segura.</p>
-<button onclick="gerarPix()">💳 Pagar Agora</button>
+  <h1>Bem-vindo ao Meu Site Moderno</h1>
+  <p>Clique no botão para pagar R$ 9,90 via PIX.</p>
+  <button onclick="gerarPix()">Pagar Agora</button>
 
-<div id="pix-info">
-  <h2>Escaneie ou copie o código PIX</h2>
-  <div id="qrcode"></div>
-  <p>Código PIX: <strong id="pix-code"></strong></p>
-  <button onclick="copiarPix()">📋 Copiar Código PIX</button>
-</div>
+  <div id="pix-info">
+    <h2>Escaneie o QR Code ou Copie o Código PIX</h2>
+    <div id="qrcode"></div>
+    <p>Código PIX: <strong id="pix-code"></strong></p>
+    <button onclick="copiarPix()">Copiar Código PIX</button>
+  </div>
+  <p id="error"></p>
 
-<p id="error"></p>
+  <script>
+    async function gerarPix() {
+      try {
+        const response = await fetch('/api/pix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: 990, // em centavos
+            customer: {
+              email: 'lead@example.com',
+              name: 'Cliente Teste',
+              document: '12345678900',
+              phone: '11999999999'
+            }
+          })
+        });
 
-<script>
-async function gerarPix() {
-  try {
-    const response = await fetch('https://pixqrcode22.vercel.app/api/pix', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: 990,
-        customer: {
-          email: 'lead@example.com',
-          name: 'Cliente Teste',
-          document: '12345678900',
-          phone: '11999999999'
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(JSON.stringify(errorData));
         }
-      })
-    });
 
-    if (!response.ok) {
-      throw new Error(`Erro ${response.status}: ${await response.text()}`);
+        const data = await response.json();
+        const pixCode = data.pix.copy_and_paste;
+
+        document.getElementById('pix-code').textContent = pixCode;
+        document.getElementById("qrcode").innerHTML = "";
+
+        new QRCode(document.getElementById("qrcode"), {
+          text: pixCode,
+          width: 200,
+          height: 200,
+          colorDark: "#2c3e50",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+
+        document.getElementById('pix-info').style.display = 'block';
+        document.getElementById('error').style.display = 'none';
+      } catch (error) {
+        console.error('Erro:', error);
+        document.getElementById('error').textContent = 'Erro ao gerar PIX: ' + error.message;
+        document.getElementById('error').style.display = 'block';
+      }
     }
 
-    const data = await response.json();
-    const pixCode = data.pix.copy_and_paste;
-
-    document.getElementById('pix-code').textContent = pixCode;
-    document.getElementById("qrcode").innerHTML = "";
-
-    new QRCode(document.getElementById("qrcode"), {
-      text: pixCode,
-      width: 200,
-      height: 200,
-      colorDark: "#2c3e50",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H
-    });
-
-    document.getElementById('pix-info').style.display = 'block';
-    document.getElementById('error').style.display = 'none';
-  } catch (error) {
-    console.error('Erro:', error);
-    document.getElementById('error').textContent = 'Erro ao gerar PIX: ' + error.message;
-    document.getElementById('error').style.display = 'block';
-  }
-}
-
-function copiarPix() {
-  const pixCode = document.getElementById('pix-code').textContent;
-  if (pixCode) {
-    navigator.clipboard.writeText(pixCode).then(() => {
-      alert('✅ Código PIX copiado!');
-    });
-  } else {
-    alert('Nenhum código PIX disponível.');
-  }
-}
-</script>
+    function copiarPix() {
+      const pixCode = document.getElementById('pix-code').textContent;
+      if (pixCode) {
+        navigator.clipboard.writeText(pixCode).then(() => {
+          alert('✅ Código PIX copiado!');
+        });
+      } else {
+        alert('Nenhum código PIX disponível.');
+      }
+    }
+  </script>
 </body>
 </html>
-
-
-

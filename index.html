@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pagamento PIX</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      font-size: 2.2em;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1.2em;
+      color: #555;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    button {
+      padding: 14px 40px;
+      background: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 1.1em;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #219d55;
+      transform: translateY(-2px);
+    }
+
+    #pix-info {
+      display: none;
+      background-color: white;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      text-align: center;
+      max-width: 420px;
+      margin-top: 30px;
+    }
+
+    #qrcode {
+      margin: 15px auto;
+      padding: 10px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    #pix-code {
+      color: #e74c3c;
+      word-break: break-all;
+      font-size: 0.9em;
+      margin: 10px 0;
+    }
+
+    #error {
+      color: #e74c3c;
+      font-size: 1em;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pagamento via PIX</h1>
+  <p>Clique no botão abaixo para pagar <b>R$ 9,90</b> de forma rápida e segura.</p>
+  <button onclick="gerarPix()">💳 Pagar Agora</button>
+
+  <div id="pix-info">
+    <h2>Escaneie ou copie o código PIX</h2>
+    <div id="qrcode"></div>
+    <p>Código PIX: <strong id="pix-code"></strong></p>
+    <button onclick="copiarPix()">📋 Copiar Código PIX</button>
+  </div>
+
+  <p id="error"></p>
+
+  <script>
+    async function gerarPix() {
+      try {
+        const response = await fetch('/api/pix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: 9.90,
+            description: 'Pagamento de R$ 9,90',
+            payer: { email: 'lead@example.com' }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro ${response.status}: ${await response.text()}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error.message || 'Erro desconhecido na API');
+        }
+
+        document.getElementById('pix-code').textContent = data.pix_code;
+        document.getElementById("qrcode").innerHTML = "";
+
+        new QRCode(document.getElementById("qrcode"), {
+          text: data.pix_code,
+          width: 200,
+          height: 200,
+          colorDark: "#2c3e50",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+
+        document.getElementById('pix-info').style.display = 'block';
+        document.getElementById('error').style.display = 'none';
+      } catch (error) {
+        console.error('Erro:', error);
+        document.getElementById('error').textContent = 'Erro ao gerar PIX: ' + error.message;
+        document.getElementById('error').style.display = 'block';
+      }
+    }
+
+    function copiarPix() {
+      const pixCode = document.getElementById('pix-code').textContent;
+      if (pixCode) {
+        navigator.clipboard.writeText(pixCode).then(() => {
+          alert('✅ Código PIX copiado para a área de transferência!');
+        });
+      } else {
+        alert('Nenhum código PIX disponível.');
+      }
+    }
+  </script>
+</body>
+</html>

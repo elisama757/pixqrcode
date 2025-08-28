@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     const response = await fetch("https://checkout.mangofy.com.br/api/v1/payment", {
       method: "POST",
       headers: {
-        "Authorization": process.env.MANGOFY_API_KEY, // apenas a chave, sem Bearer
+        "Authorization": `ApiKey ${process.env.MANGOFY_API_KEY}`, // 🔹 corrigido
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
